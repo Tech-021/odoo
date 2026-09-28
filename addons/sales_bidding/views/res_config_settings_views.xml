@@ -23,6 +23,38 @@
                             <field name="daily_bid_target"/>
                         </setting>
 
+                        <block title="Freelancer Integration">
+                            <setting string="Enabled">
+                                <field name="freelancer_enabled"/>
+                            </setting>
+                            <setting string="Client ID">
+                                <field name="freelancer_client_id"/>
+                            </setting>
+                            <setting string="Client Secret">
+                                <field name="freelancer_client_secret" password="True"/>
+                            </setting>
+                            <setting string="Access Token">
+                                <field name="freelancer_access_token" password="True"/>
+                            </setting>
+                            <setting string="Refresh Token">
+                                <field name="freelancer_refresh_token" password="True"/>
+                            </setting>
+                            <setting string="Freelancer User ID">
+                                <field name="freelancer_user_id"/>
+                            </setting>
+                            <setting string="Odoo User (Reference)"
+                                     help="Informational only; imported bids remain unassigned until claimed.">
+                                <field name="freelancer_odoo_user_id"/>
+                            </setting>
+                            <setting string="Initial Sync Days">
+                                <field name="freelancer_initial_sync_days"/>
+                            </setting>
+                            <button name="action_sync_freelancer_bids"
+                                    string="Sync Freelancer Bids"
+                                    type="object"
+                                    class="btn-primary"/>
+                        </block>
+
                     </block>
                 </app>
 

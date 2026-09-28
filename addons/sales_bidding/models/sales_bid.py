@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo import _, api, fields, models
 
 class SalesBid(models.Model):
@@ -16,8 +16,23 @@ class SalesBid(models.Model):
     salesperson_id = fields.Many2one(
         comodel_name="res.users",
         string="Salesperson",
-        required=True,
+        # Manual and CSV bids still default to the current user.  Imported
+        # Freelancer bids are initially unassigned and are claimed later.
+        required=False,
         default=lambda self: self.env.user,
+    )
+
+    freelancer_bid_id = fields.Char(
+        string="Freelancer Bid ID",
+        copy=False,
+        index=True,
+        readonly=True,
+    )
+
+    freelancer_project_id = fields.Char(
+        string="Freelancer Project ID",
+        copy=False,
+        readonly=True,
     )
 
     platform = fields.Selection(
@@ -77,6 +92,31 @@ class SalesBid(models.Model):
         string="Active",
         default=True,
     )
+
+    _freelancer_bid_id_unique = models.Constraint(
+        "unique(platform, freelancer_bid_id)",
+        "A Freelancer bid can only be imported once.",
+    )
+
+    def action_claim_freelancer_bid(self):
+        self.ensure_one()
+        if self.platform != "freelancer" or not self.freelancer_bid_id:
+            raise UserError(_("Only imported Freelancer bids can be claimed."))
+        if self.salesperson_id:
+            raise UserError(_("This bid has already been assigned to another bidder."))
+
+        # Atomic update protects two bidders claiming the same row at once.
+        self.env.cr.execute(
+            """UPDATE sales_bid
+               SET salesperson_id = %s, write_date = NOW()
+             WHERE id = %s AND salesperson_id IS NULL""",
+            (self.env.user.id, self.id),
+        )
+        if self.env.cr.rowcount != 1:
+            self.invalidate_recordset(["salesperson_id"])
+            raise UserError(_("This bid has already been assigned to another bidder."))
+        self.invalidate_recordset(["salesperson_id"])
+        return True
 
     daily_bid_target = fields.Integer(
         string="Daily Bid Target",

@@ -54,6 +54,8 @@
                             <field name="salesperson_id"/>
                             <field name="bid_date"/>
                             <field name="active"/>
+                            <field name="freelancer_bid_id" readonly="1"/>
+                            <field name="freelancer_project_id" readonly="1"/>
                         </group>
                     </group>
 
@@ -62,6 +64,13 @@
                     </group>
 
                 </sheet>
+                <footer>
+                    <button name="action_claim_freelancer_bid"
+                            string="Assign to Me"
+                            type="object"
+                            class="btn-primary"
+                            invisible="platform != 'freelancer' or not freelancer_bid_id or salesperson_id"/>
+                </footer>
             </form>
         </field>
     </record>
@@ -102,6 +111,7 @@
                 <field name="platform"/>
                 <field name="status"/>
                 <field name="bid_date"/>
+                <field name="freelancer_bid_id"/>
 
                 <separator/>
 
@@ -110,6 +120,11 @@
                     name="my_bids"
                     string="My Bids"
                     domain="[('salesperson_id', '=', uid)]"
+                />
+                <filter
+                    name="unassigned_freelancer"
+                    string="Unassigned Freelancer Bids"
+                    domain="[('platform', '=', 'freelancer'), ('salesperson_id', '=', False)]"
                 />
 
                 <separator/>

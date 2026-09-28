@@ -9,6 +9,7 @@
     "data": [
         "security/sales_bidding_security.xml",
         "security/ir.model.access.csv",
+        "data/freelancer_cron.xml",
         "views/sales_bid_views.xml",
         "views/res_config_settings_views.xml",
         "wizard/sales_bid_import_wizard_views.xml",
