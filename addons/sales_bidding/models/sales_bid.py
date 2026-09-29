@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo import _, api, fields, models
 
 class SalesBid(models.Model):
@@ -20,6 +20,7 @@ class SalesBid(models.Model):
         # Freelancer bids are initially unassigned and are claimed later.
         required=False,
         default=lambda self: self.env.user,
+        domain=lambda self: self._salesperson_domain(),
     )
 
     freelancer_bid_id = fields.Char(
@@ -98,6 +99,14 @@ class SalesBid(models.Model):
         "A Freelancer bid can only be imported once.",
     )
 
+    @api.model
+    def _salesperson_domain(self):
+        if self.env.user.has_group("sales_bidding.group_sales_bidding_manager"):
+            user_group = self.env.ref("sales_bidding.group_sales_bidding_user")
+            manager_group = self.env.ref("sales_bidding.group_sales_bidding_manager")
+            return [("all_group_ids", "in", [user_group.id, manager_group.id])]
+        return [("id", "=", self.env.user.id)]
+
     def action_claim_freelancer_bid(self):
         self.ensure_one()
         if self.platform != "freelancer" or not self.freelancer_bid_id:
@@ -117,6 +126,24 @@ class SalesBid(models.Model):
             raise UserError(_("This bid has already been assigned to another bidder."))
         self.invalidate_recordset(["salesperson_id"])
         return True
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.su and not self.env.user.has_group(
+            "sales_bidding.group_sales_bidding_manager"
+        ):
+            vals_list = [dict(vals, salesperson_id=self.env.user.id) for vals in vals_list]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            "salesperson_id" in vals
+            and not self.env.su
+            and not self.env.user.has_group("sales_bidding.group_sales_bidding_manager")
+            and vals["salesperson_id"] != self.env.user.id
+        ):
+            raise AccessError(_("You can only assign a bid to yourself."))
+        return super().write(vals)
 
     daily_bid_target = fields.Integer(
         string="Daily Bid Target",

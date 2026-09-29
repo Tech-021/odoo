@@ -213,6 +213,7 @@
                 'search_default_today': 1
             }
         </field>
+        <field name="domain">[('salesperson_id', '=', uid)]</field>
     </record>
 
 
@@ -225,12 +226,45 @@
         <field name="res_model">sales.bid</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_sales_bid_search"/>
+        <field name="domain">[('salesperson_id', '!=', False)]</field>
 
         <field name="context">
             {
                 'search_default_today': 1
             }
         </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- Unassigned Freelancer Bids     -->
+    <!-- ============================= -->
+
+    <record id="view_sales_bid_list_freelancer_unassigned" model="ir.ui.view">
+        <field name="name">sales.bid.list.freelancer.unassigned</field>
+        <field name="model">sales.bid</field>
+        <field name="arch" type="xml">
+            <list string="Freelancer Bids">
+                <field name="bid_date"/>
+                <field name="platform"/>
+                <field name="name"/>
+                <field name="bid_amount"/>
+                <field name="bid_type"/>
+                <field name="status"/>
+                <field name="freelancer_project_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_sales_bid_freelancer_unassigned" model="ir.actions.act_window">
+        <field name="name">Freelancer Bids</field>
+        <field name="res_model">sales.bid</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_sales_bid_list_freelancer_unassigned')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sales_bid_form')})
+        ]"/>
+        <field name="domain">[('platform', '=', 'freelancer'), ('salesperson_id', '=', False)]</field>
     </record>
 
 
@@ -261,6 +295,15 @@
         action="action_sales_bid_team"
         sequence="20"
         groups="sales_bidding.group_sales_bidding_manager"
+    />
+
+    <menuitem
+        id="menu_sales_bidding_freelancer_bids"
+        name="Freelancer Bids"
+        parent="menu_sales_bidding_root"
+        action="action_sales_bid_freelancer_unassigned"
+        sequence="15"
+        groups="sales_bidding.group_sales_bidding_user,sales_bidding.group_sales_bidding_manager"
     />
 
 </odoo>
